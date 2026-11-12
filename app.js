@@ -21,19 +21,46 @@ const fmt = new Intl.DateTimeFormat(navigator.language, {
 const local = (iso) => fmt.format(new Date(iso));
 
 function rowHtml(i) {
-  const done = acked.has(i.id);
-  return `<li data-testid="incident-row" data-id="${esc(i.id)}" tabindex="0" class="row ${esc(i.severity)}${i.id === selected ? ' selected' : ''}">
-    <span class="id">${esc(i.id)}</span>
+  return `<span class="id">${esc(i.id)}</span>
     <span class="sev">${esc(i.severity)}</span>
     <span class="what">${esc(i.service)} · ${esc(i.region)} · ${esc(i.summary)}</span>
-    <time datetime="${esc(i.openedAt)}">${esc(local(i.openedAt))}</time>
-    ${done ? '<span data-testid="acked" class="acked">acked</span>' : ''}
-  </li>`;
+    <time datetime="${esc(i.openedAt)}">${esc(local(i.openedAt))}</time>`;
 }
 
+// Rows stay in the DOM between refreshes: new incidents are inserted, existing rows are updated in place.
 function render() {
   const sorted = [...current].sort((a, b) => new Date(b.openedAt) - new Date(a.openedAt));
-  list.innerHTML = sorted.map(rowHtml).join('');
+  const keep = new Set(sorted.map((i) => i.id));
+  const existing = new Map();
+  for (const li of [...list.children]) {
+    if (keep.has(li.dataset.id)) existing.set(li.dataset.id, li);
+    else li.remove();
+  }
+  sorted.forEach((i, idx) => {
+    let li = existing.get(i.id);
+    if (!li) {
+      li = document.createElement('li');
+      li.dataset.testid = 'incident-row';
+      li.dataset.id = i.id;
+      li.tabIndex = 0;
+      li.innerHTML = rowHtml(i);
+    }
+    li.className = `row ${i.severity}${i.id === selected ? ' selected' : ''}`;
+    const mark = li.querySelector('[data-testid="acked"]');
+    if (acked.has(i.id) && !mark) {
+      const m = document.createElement('span');
+      m.dataset.testid = 'acked';
+      m.className = 'acked';
+      m.textContent = 'acked';
+      li.append(m);
+    }
+    const t = li.querySelector('time');
+    if (t.getAttribute('datetime') !== i.openedAt) {
+      t.setAttribute('datetime', i.openedAt);
+      t.textContent = local(i.openedAt);
+    }
+    if (list.children[idx] !== li) list.insertBefore(li, list.children[idx] ?? null);
+  });
   empty.hidden = sorted.length > 0;
 }
 
