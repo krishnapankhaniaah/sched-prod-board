@@ -13,3 +13,8 @@ footer { color: #777; font-size: 13px; }
 .row .acked { color: #1a7f37; font-weight: 600; }
 .loader, .empty { padding: 12px; color: #666; }
 [hidden] { display: none; }
+.row { cursor: pointer; }
+.row:hover, .row.selected { background: #eef4ff; }
+.panel { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 24px; background: #fff; border-top: 2px solid #1d1d1f; }
+.panel h2 { margin: 0 0 8px; font-size: 18px; font-family: ui-monospace, monospace; }
+.panel button { font: inherit; padding: 6px 14px; cursor: pointer; margin-right: 8px; }
